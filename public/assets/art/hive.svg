@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="260" height="280" viewBox="0 0 260 280"><defs><linearGradient id="wood1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3d39a"/><stop offset="1" stop-color="#e2b46e"/></linearGradient>
+   <linearGradient id="wood2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7dfae"/><stop offset="1" stop-color="#e8c27f"/></linearGradient></defs>
+  <rect x="34" y="250" width="192" height="22" rx="6" fill="#5e4a33"/>
+  <rect x="50" y="260" width="16" height="20" fill="#262c1f"/><rect x="194" y="260" width="16" height="20" fill="#262c1f"/>
+  <rect x="40" y="150" width="180" height="100" rx="8" fill="url(#wood1)" stroke="#5e4a33" stroke-width="5"/>
+  <rect x="40" y="70" width="180" height="84" rx="8" fill="url(#wood2)" stroke="#5e4a33" stroke-width="5"/>
+  <path d="M22 76 L130 16 L238 76 Z" fill="#363d2d" stroke="#262c1f" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M40 76 L130 26 L220 76" stroke="#4d5640" stroke-width="5" fill="none"/>
+  <rect x="86" y="222" width="88" height="18" rx="9" fill="#2a2016"/>
+  <rect x="60" y="244" width="140" height="8" rx="4" fill="#c79a5b"/>
+  <g stroke="#b88a4f" stroke-width="2" opacity=".6"><path d="M50 180 h160 M50 205 h160 M50 100 h160 M50 125 h160"/></g></svg>

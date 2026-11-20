@@ -1,0 +1,9 @@
+html, body { margin: 0; height: 100%; background: #363d2d; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; }
+#game { position: fixed; inset: 0; }
+#game canvas { display: block; }
+#rotate { display: none; position: fixed; inset: 0; z-index: 10; background: #faf7f1; color: #262c1f;
+  font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 1.5rem; text-align: center;
+  flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem; padding: 2rem; }
+#rotate img { width: 110px; animation: tilt 1.6s ease-in-out infinite; }
+@keyframes tilt { 0%, 30% { transform: rotate(0) } 60%, 100% { transform: rotate(-90deg) } }
+@media (orientation: portrait) and (max-width: 820px) { #rotate { display: flex; } }
