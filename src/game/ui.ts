@@ -21,8 +21,13 @@ export function button(scene: Phaser.Scene, x: number, y: number, label: string,
   c.on('pointerover', () => scene.tweens.add({ targets: c, scale: s * 1.06, duration: 120 }))
   c.on('pointerout', () => scene.tweens.add({ targets: c, scale: s, duration: 120 }))
   c.on('pointerdown', () => {
+    // l'azione parte subito e una sola volta (anche se il bambino tocca due volte o i tween sono in pausa)
+    if (c.getData('lock')) return
+    c.setData('lock', true)
+    setTimeout(() => c.setData('lock', false), 450)
     audio.unlock(); audio.play('click')
-    scene.tweens.add({ targets: c, scaleX: s * .92, scaleY: s * .88, duration: 70, yoyo: true, onComplete: onClick })
+    scene.tweens.add({ targets: c, scaleX: s * .92, scaleY: s * .88, duration: 70, yoyo: true })
+    onClick()
   })
   return c
 }
@@ -34,6 +39,9 @@ export function iconButton(scene: Phaser.Scene, x: number, y: number, icon: stri
   const ic = scene.add.image(0, -3, icon).setScale(.9)
   c.add([bg, ic]).setSize(80, 80).setInteractive({ useHandCursor: true })
   c.on('pointerdown', () => {
+    if (c.getData('lock')) return
+    c.setData('lock', true)
+    setTimeout(() => c.setData('lock', false), 350)
     audio.unlock(); audio.play('click')
     scene.tweens.add({ targets: c, scale: .85, duration: 70, yoyo: true })
     onClick(ic)
@@ -51,6 +59,11 @@ export function panel(scene: Phaser.Scene, x: number, y: number, w: number, h: n
 }
 
 export function fadeTo(scene: Phaser.Scene, key: string, data?: object) {
+  // un solo cambio di schermata alla volta
+  if (scene.data.get('leaving')) return
+  scene.data.set('leaving', true)
+  scene.events.once('shutdown', () => scene.data.set('leaving', false))
+  scene.tweens.resumeAll(); scene.time.paused = false
   scene.cameras.main.fadeOut(350, 250, 247, 241)
   scene.cameras.main.once('camerafadeoutcomplete', () => scene.scene.start(key, data))
 }

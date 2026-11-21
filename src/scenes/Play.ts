@@ -16,7 +16,7 @@ class Flower {
   bud: Phaser.GameObjects.Image
   head: Phaser.GameObjects.Image
   ring: Phaser.GameObjects.Graphics
-  glow?: Phaser.FX.Glow
+  halo: Phaser.GameObjects.Image
   phase = 0
   t = 0
   nectar = 4
@@ -27,6 +27,7 @@ class Flower {
     this.bud = scene.add.image(x, hy, 'bud').setScale(0).setDepth(31)
     this.head = scene.add.image(x, hy, 'fl_' + sp).setScale(0).setDepth(32)
     this.ring = scene.add.graphics().setDepth(33)
+    this.halo = scene.add.image(x, hy, 'pollen').setDepth(31).setScale(0).setAlpha(0).setTint(0xfff1a8).setBlendMode(Phaser.BlendModes.ADD)
     this.drawStem(0)
     this.phase = startPhase
     this.t = Math.random() * PHASE_T[startPhase] * .8
@@ -62,9 +63,9 @@ class Flower {
     } else if (this.phase === 3) {
       this.bud.setScale(0)
       s.tweens.add({ targets: this.head, scale: full, duration: d, ease: 'Back.out' })
-      if (!this.glow && this.head.preFX) this.glow = this.head.preFX.addGlow(0xfff1a8, 3, 0, false, .1, 12)
+      s.tweens.add({ targets: this.halo, scale: 9, alpha: .55, duration: 500 })
     } else if (this.phase === 4) {
-      if (this.glow) { this.head.preFX?.remove(this.glow); this.glow = undefined }
+      s.tweens.add({ targets: this.halo, alpha: 0, scale: 0, duration: 400 })
       this.head.setTint(0xc8b48c)
       s.tweens.add({ targets: this.head, scale: full * .8, angle: 22, y: this.hy + 14, duration: 900 })
     } else if (this.phase === 5) {
@@ -76,6 +77,8 @@ class Flower {
     this.sway += dt * 1.6
     if (this.phase >= 1 && this.phase <= 4) {
       this.head.x = this.x + Math.sin(this.sway) * 5
+      this.halo.x = this.head.x
+      if (this.phase === 3) this.halo.setAlpha(this.nectar > 0 ? .4 + Math.sin(this.sway * 2) * .15 : 0)
       this.drawStem(1)
     }
     this.t += dt
@@ -94,7 +97,7 @@ class Flower {
     if ((this.phase === 2 || this.phase === 3) && this.nectar <= 0) this.head.setAlpha(.6)
     return true
   }
-  destroy() { this.stem.destroy(); this.bud.destroy(); this.head.destroy(); this.ring.destroy() }
+  destroy() { this.stem.destroy(); this.bud.destroy(); this.head.destroy(); this.ring.destroy(); this.halo.destroy() }
 }
 
 export class Play extends Phaser.Scene {
@@ -131,6 +134,8 @@ export class Play extends Phaser.Scene {
   dizzyStars?: Phaser.GameObjects.Container
   pauseLayer?: Phaser.GameObjects.Container
   lastTick = 0
+  petals?: Phaser.GameObjects.Particles.ParticleEmitter
+  sparks?: Phaser.GameObjects.Particles.ParticleEmitter
   guards: { b: Phaser.GameObjects.Image; a: number }[] = []
 
   constructor() { super('Play') }
@@ -138,7 +143,7 @@ export class Play extends Phaser.Scene {
   init(data: { level: number }) {
     this.lv = LEVELS[data.level - 1]
     Object.assign(this, { carry: 0, delivered: 0, timeLeft: this.lv.time, invuln: 0, dizzy: 0, over: false, paused: false,
-      flowers: [], slotX: [], hornets: [], smogs: [], carryIcons: [], wings: [], lastTick: 0, steering: false })
+      flowers: [], slotX: [], petals: undefined, sparks: undefined, hornets: [], smogs: [], carryIcons: [], wings: [], lastTick: 0, steering: false })
     this.vel = new Phaser.Math.Vector2()
     this.tutorial = this.lv.id === 1 && !store.get('tutorialDone', false) ? 1 : 0
   }
@@ -175,8 +180,8 @@ export class Play extends Phaser.Scene {
     this.keys.ESC.on('down', () => this.togglePause())
 
     if (this.tutorial) this.showTutorial()
-    this.game.events.on('blur', this.autoPause, this)
-    this.events.once('shutdown', () => this.game.events.off('blur', this.autoPause, this))
+    this.game.events.on('hidden', this.autoPause, this)
+    this.events.once('shutdown', () => this.game.events.off('hidden', this.autoPause, this))
   }
 
   autoPause() { if (!this.paused && !this.over) this.togglePause() }
@@ -289,20 +294,20 @@ export class Play extends Phaser.Scene {
 
   // ---------------------------------------------------------------- effetti
   petalBurst(x: number, y: number, color: number) {
-    const e = this.add.particles(x, y, 'petal', {
+    if (!this.petals) this.petals = this.add.particles(0, 0, 'petal', {
       speed: { min: 60, max: 160 }, angle: { min: 200, max: 340 }, gravityY: 220, lifespan: 1400, rotate: { min: 0, max: 360 },
-      scale: { start: .7, end: .3 }, alpha: { start: 1, end: 0 }, tint: color === 0xfffef6 ? 0xf3f0e0 : color, emitting: false
+      scale: { start: .7, end: .3 }, alpha: { start: 1, end: 0 }, emitting: false
     }).setDepth(75)
-    e.explode(10)
-    this.time.delayedCall(1600, () => e.destroy())
+    this.petals.particleTint = color === 0xfffef6 ? 0xf3f0e0 : color
+    this.petals.explode(10, x, y)
   }
 
   sparkle(x: number, y: number, n = 12, tint = 0xfff1a8) {
-    const e = this.add.particles(x, y, 'spark', {
-      speed: { min: 80, max: 240 }, lifespan: 600, scale: { start: .8, end: 0 }, tint, rotate: { min: 0, max: 180 }, emitting: false
+    if (!this.sparks) this.sparks = this.add.particles(0, 0, 'spark', {
+      speed: { min: 80, max: 240 }, lifespan: 600, scale: { start: .8, end: 0 }, rotate: { min: 0, max: 180 }, emitting: false
     }).setDepth(80)
-    e.explode(n)
-    this.time.delayedCall(800, () => e.destroy())
+    this.sparks.particleTint = tint
+    this.sparks.explode(n, x, y)
   }
 
   floatText(x: number, y: number, s: string, color = '#d2893c', size = 40) {
@@ -355,7 +360,7 @@ export class Play extends Phaser.Scene {
       c.add(panel(this, W / 2, H / 2, 560, 420))
       c.add(txt(this, W / 2, H / 2 - 140, 'Pausa', 64, '#262c1f', 700))
       c.add(button(this, W / 2, H / 2 - 20, 'CONTINUA', () => this.togglePause(), { scale: .8 }))
-      c.add(button(this, W / 2, H / 2 + 110, 'STAGIONI', () => { this.tweens.resumeAll(); this.time.paused = false; fadeTo(this, 'Levels') }, { green: true, scale: .8 }))
+      c.add(button(this, W / 2, H / 2 + 110, 'STAGIONI', () => fadeTo(this, 'Levels'), { green: true, scale: .8 }))
       this.pauseLayer = c
     } else {
       this.pauseLayer?.destroy(); this.pauseLayer = undefined

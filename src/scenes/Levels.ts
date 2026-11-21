@@ -53,7 +53,8 @@ export class Levels extends Phaser.Scene {
         audio.unlock()
         if (!unlocked) { audio.play('hit', .6); this.tweens.add({ targets: c, x: x + 10, duration: 50, yoyo: true, repeat: 3 }); return }
         audio.play('click'); audio.startMusic()
-        this.tweens.add({ targets: c, scale: .92, duration: 80, yoyo: true, onComplete: () => fadeTo(this, 'Intro', { level: lv.id }) })
+        this.tweens.add({ targets: c, scale: .92, duration: 80, yoyo: true })
+        fadeTo(this, 'Intro', { level: lv.id })
       })
       if (unlocked) {
         c.on('pointerover', () => this.tweens.add({ targets: c, scale: 1.05, duration: 120 }))
